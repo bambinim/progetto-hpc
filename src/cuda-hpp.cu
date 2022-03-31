@@ -157,8 +157,8 @@ void step( const cell_t *cur, cell_t *next, int N, phase_t phase )
 
 __global__ void cuda_step(cell_t *cur, cell_t *next, int N, phase_t phase) {
 
-    const int i = threadIdx.y + blockIdx.y * blockDim.y;
-    const int j = threadIdx.x + blockIdx.x * blockDim.x;
+    const int i = (threadIdx.y + blockIdx.y * blockDim.y) * 2;
+    const int j = (threadIdx.x + blockIdx.x * blockDim.x) * 2;
 
     assert(cur != NULL);
     assert(next != NULL);
@@ -342,8 +342,8 @@ int main( int argc, char* argv[] )
 
     read_problem(filein, cur, N);
 
-    int gridSize = ((N + BLKDIM - 1) / BLKDIM, (N + BLKDIM - 1) / BLKDIM);
-    int blockSize = (BLKDIM, BLKDIM);
+    const dim3 gridSize ((N + BLKDIM - 1) / BLKDIM / 2, (N + BLKDIM - 1) / BLKDIM / 2);
+    const dim3 blockSize (BLKDIM, BLKDIM);
 
     // create device variables and allocate CUDA memory
     cell_t *d_cur, *d_next;
@@ -352,30 +352,11 @@ int main( int argc, char* argv[] )
     cudaMemcpy(d_cur, cur, GRID_SIZE, cudaMemcpyHostToDevice);
 
     for (t=0; t<nsteps; t++) {
-#ifdef DUMP_ALL
-        write_image(cur, N, t);
-#endif
-        /*
-        step(cur, next, N, EVEN_PHASE);
-        step(next, cur, N, ODD_PHASE);
-        */
-       cuda_step<<<gridSize, blockSize>>>(d_cur, d_next, N, EVEN_PHASE);
-       cudaCheckError();
-       cuda_step<<<gridSize, blockSize>>>(d_cur, d_next, N, ODD_PHASE);
-       cudaCheckError();
+        cuda_step<<<gridSize, blockSize>>>(d_cur, d_next, N, EVEN_PHASE);
+        cudaCheckError();
+        cuda_step<<<gridSize, blockSize>>>(d_next, d_cur, N, ODD_PHASE);
+        cudaCheckError();
     }
-#ifdef DUMP_ALL
-    /* Reverse all particles and go back to the initial state */
-    for (; t<2*nsteps; t++) {
-        write_image(cur, N, t);
-        /*
-        step(cur, next, N, ODD_PHASE);
-        step(next, cur, N, EVEN_PHASE);
-        */
-       cuda_step<<<gridSize, blockSize>>>(d_cur, d_next, N, ODD_PHASE);
-       cuda_step<<<gridSize, blockSize>>>(d_cur, d_next, N, EVEN_PHASE);
-    }
-#endif
     cudaMemcpy(cur, d_cur, GRID_SIZE, cudaMemcpyDeviceToHost);
     // free cuda memory
     cudaFree(d_cur);

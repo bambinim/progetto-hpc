@@ -76,6 +76,7 @@
 #include <math.h> /* for ceil() */
 #include <assert.h>
 #include <omp.h>
+#include "hpc.h"
 
 typedef enum {
     WALL,
@@ -311,6 +312,7 @@ int main( int argc, char* argv[] )
 
     read_problem(filein, cur, N);
 
+    double start_time = hpc_gettime();
     for (t=0; t<nsteps; t++) {
 #ifdef DUMP_ALL
         write_image(cur, N, t);
@@ -318,6 +320,8 @@ int main( int argc, char* argv[] )
         step(cur, next, N, EVEN_PHASE);
         step(next, cur, N, ODD_PHASE);
     }
+    double finish_time = hpc_gettime();
+    printf("Elapsed time: %f\n", finish_time - start_time);
 #ifdef DUMP_ALL
     /* Reverse all particles and go back to the initial state */
     for (; t<2*nsteps; t++) {
