@@ -351,12 +351,16 @@ int main( int argc, char* argv[] )
     cudaMalloc((void **)&d_next, GRID_SIZE);
     cudaMemcpy(d_cur, cur, GRID_SIZE, cudaMemcpyHostToDevice);
 
+    double start_time = hpc_gettime();
     for (t=0; t<nsteps; t++) {
         cuda_step<<<gridSize, blockSize>>>(d_cur, d_next, N, EVEN_PHASE);
         cudaCheckError();
         cuda_step<<<gridSize, blockSize>>>(d_next, d_cur, N, ODD_PHASE);
         cudaCheckError();
     }
+    double finish_time = hpc_gettime();
+    printf("Execution time: %fs\n", finish_time - start_time);
+
     cudaMemcpy(cur, d_cur, GRID_SIZE, cudaMemcpyDeviceToHost);
     // free cuda memory
     cudaFree(d_cur);

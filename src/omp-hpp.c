@@ -321,7 +321,7 @@ int main( int argc, char* argv[] )
         step(next, cur, N, ODD_PHASE);
     }
     double finish_time = hpc_gettime();
-    printf("Elapsed time: %f\n", finish_time - start_time);
+    printf("Execution time: %fs\n", finish_time - start_time);
 #ifdef DUMP_ALL
     /* Reverse all particles and go back to the initial state */
     for (; t<2*nsteps; t++) {
