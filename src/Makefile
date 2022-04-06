@@ -33,10 +33,10 @@ EXE_CUDA:=$(basename $(wildcard cuda-*.cu))
 DATAFILES:=
 EXE_SERIAL:=hpp
 EXE:=$(EXE_OMP) $(EXE_MPI) $(EXE_SERIAL) $(EXE_CUDA)
-CFLAGS+=-std=c99 -Wall -Wpedantic -O2 -g
+CFLAGS+=-std=c99 -Wall -Wpedantic -O2
 LDLIBS+=-lm
 NVCC:=nvcc
-NVCFLAGS+=-g -G -gencode arch=compute_37,code=sm_37 -Wno-deprecated-gpu-targets
+NVCFLAGS+=
 NVLDLIBS+=-lm
 
 .PHONY: clean
