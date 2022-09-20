@@ -113,48 +113,6 @@ __host__ __device__ void swap_cells(cell_t *a, cell_t *b)
     }
 }
 
-/* Compute the `next` grid given the `cur`-rent configuration. */
-void step( const cell_t *cur, cell_t *next, int N, phase_t phase )
-{
-    int i, j;
-
-    assert(cur != NULL);
-    assert(next != NULL);
-
-    /* Loop over all coordinates (i,j) s.t. both i and j are even */
-    for (i=0; i<N; i+=2) {
-        for (j=0; j<N; j+=2) {
-            /**
-             * If phase==EVEN_PHASE:
-             * ab
-             * cd
-             *
-             * If phase==ODD_PHASE:
-             * dc
-             * ba
-             */
-            const int a = IDX(i      , j      , N);
-            const int b = IDX(i      , j+phase, N);
-            const int c = IDX(i+phase, j      , N);
-            const int d = IDX(i+phase, j+phase, N);
-            next[a] = cur[a];
-            next[b] = cur[b];
-            next[c] = cur[c];
-            next[d] = cur[d];
-            if ((((next[a] == EMPTY) != (next[b] == EMPTY)) &&
-                 ((next[c] == EMPTY) != (next[d] == EMPTY))) ||
-                (next[a] == WALL) || (next[b] == WALL) ||
-                (next[c] == WALL) || (next[d] == WALL)) {
-                swap_cells(&next[a], &next[b]);
-                swap_cells(&next[c], &next[d]);
-            } else {
-                swap_cells(&next[a], &next[d]);
-                swap_cells(&next[b], &next[c]);
-            }
-        }
-    }
-}
-
 __global__ void cuda_step(cell_t *cur, cell_t *next, int N, phase_t phase) {
 
     const int i = (threadIdx.y + blockIdx.y * blockDim.y) * 2;
@@ -360,6 +318,7 @@ int main( int argc, char* argv[] )
     }
     double finish_time = hpc_gettime();
     printf("Execution time: %fs\n", finish_time - start_time);
+    printf("Throughput: %f Mpixel/s \n", N / 1000 * N / 1000 * nsteps / (finish_time - start_time));
 
     cudaMemcpy(cur, d_cur, GRID_SIZE, cudaMemcpyDeviceToHost);
     // free cuda memory
